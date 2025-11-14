@@ -9,26 +9,51 @@ import userEvent from '@testing-library/user-event';
 import { RagScopeToggle } from '@/components/rag-scope-toggle';
 
 // Mock the state hook
-const mockSetScopeType = vi.fn();
-const mockToggleTag = vi.fn();
-const mockSetScope = vi.fn();
-const mockGetScopeForAPI = vi.fn(() => ['my']);
-
-vi.mock('@/lib/state', () => ({
-  useRagScope: () => ({
+const {
+  mockSetScopeType,
+  mockToggleTag,
+  mockSetScope,
+  mockGetScopeForAPI,
+  mockUseRagScope,
+} = vi.hoisted(() => {
+  const mockSetScopeType = vi.fn();
+  const mockToggleTag = vi.fn();
+  const mockSetScope = vi.fn();
+  const mockGetScopeForAPI = vi.fn(() => ['my']);
+  const mockUseRagScope = vi.fn(() => ({
     scopeType: 'my',
     scope: [],
     setScopeType: mockSetScopeType,
     toggleTag: mockToggleTag,
     setScope: mockSetScope,
     getScopeForAPI: mockGetScopeForAPI,
-  }),
+  }));
+
+  return {
+    mockSetScopeType,
+    mockToggleTag,
+    mockSetScope,
+    mockGetScopeForAPI,
+    mockUseRagScope,
+  };
+});
+
+vi.mock('@/lib/state', () => ({
+  useRagScope: mockUseRagScope,
 }));
 
 describe('RAG-Scope Toggle E2E', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetScopeForAPI.mockReturnValue(['my']);
+    mockUseRagScope.mockReturnValue({
+      scopeType: 'my',
+      scope: [],
+      setScopeType: mockSetScopeType,
+      toggleTag: mockToggleTag,
+      setScope: mockSetScope,
+      getScopeForAPI: mockGetScopeForAPI,
+    });
   });
 
   it('should render all scope type options', () => {
@@ -52,8 +77,7 @@ describe('RAG-Scope Toggle E2E', () => {
 
   it('should show tag selection when tags scope is selected', async () => {
     mockGetScopeForAPI.mockReturnValue(['tag1']);
-    const { useRagScope } = await import('@/lib/state');
-    vi.mocked(useRagScope).mockReturnValue({
+    mockUseRagScope.mockReturnValue({
       scopeType: 'tags',
       scope: ['tag1'],
       setScopeType: mockSetScopeType,
@@ -71,8 +95,7 @@ describe('RAG-Scope Toggle E2E', () => {
 
   it('should toggle tags when clicking tag buttons', async () => {
     mockGetScopeForAPI.mockReturnValue(['tag1']);
-    const { useRagScope } = await import('@/lib/state');
-    vi.mocked(useRagScope).mockReturnValue({
+    mockUseRagScope.mockReturnValue({
       scopeType: 'tags',
       scope: ['tag1'],
       setScopeType: mockSetScopeType,

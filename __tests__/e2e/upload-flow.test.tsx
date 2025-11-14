@@ -3,10 +3,12 @@
  * Tests file upload, job creation, and status updates via SSE
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
+import type { ReactElement } from 'react';
 import userEvent from '@testing-library/user-event';
 import { UploadForm } from '@/components/upload-form';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Mock the API client
 vi.mock('@/lib/api', () => ({
@@ -25,12 +27,23 @@ vi.mock('@/lib/state', () => ({
 }));
 
 describe('Upload Flow E2E', () => {
+  let queryClient: QueryClient;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    queryClient = new QueryClient();
   });
 
+  afterEach(() => {
+    queryClient.clear();
+  });
+
+  function renderWithProviders(ui: ReactElement) {
+    return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
+  }
+
   it('should render upload form with all required fields', () => {
-    render(<UploadForm />);
+    renderWithProviders(<UploadForm />);
     
     expect(screen.getByLabelText(/title/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/material/i)).toBeInTheDocument();
@@ -39,7 +52,7 @@ describe('Upload Flow E2E', () => {
 
   it('should validate required fields before submission', async () => {
     const user = userEvent.setup();
-    render(<UploadForm />);
+    renderWithProviders(<UploadForm />);
     
     const submitButton = screen.getByRole('button', { name: /create capsule/i });
     // HTML5 validation should prevent submission without required fields
@@ -57,7 +70,7 @@ describe('Upload Flow E2E', () => {
     mockIngest.mockResolvedValue({ job_id: 'test-job-123' });
 
     const user = userEvent.setup();
-    render(<UploadForm />);
+    renderWithProviders(<UploadForm />);
     
     const titleInput = screen.getByLabelText(/title/i);
     const contentInput = screen.getByLabelText(/material/i);

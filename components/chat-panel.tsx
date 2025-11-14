@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { runChat } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { TextArea } from "@/components/ui/textarea";
+import { Textarea } from "@/components/ui/textarea";
 import { useRagScope } from "@/lib/state";
 
 interface Message {
@@ -54,11 +54,11 @@ export function ChatPanel() {
   return (
     <div className="flex flex-col gap-4">
       <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
-        <TextArea
+        <Textarea
           value={input}
           rows={4}
           onChange={(event) => setInput(event.target.value)}
-          placeholder="Ask grounded questions about your capsules�"
+          placeholder="Ask grounded questions about your capsules"
         />
         <div className="mt-3 flex items-center justify-between text-xs text-white/50">
           <p>Scope: {getScopeForAPI().join(", ") || "my (default)"}</p>
