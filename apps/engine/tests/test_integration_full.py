@@ -15,6 +15,9 @@ from app.rag import answer_chat
 from app.models import ChatRequest
 
 
+pytestmark = pytest.mark.integration
+
+
 # Skip if Postgres DSN not available
 POSTGRES_DSN = os.getenv("TEST_POSTGRES_DSN", "postgresql://postgres:postgres@localhost:5432/n1hub_test")
 
@@ -79,7 +82,7 @@ def sample_capsule():
     )
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio("asyncio")
 async def test_postgres_store_save_and_retrieve(postgres_store, sample_capsule):
     """Test: Save and retrieve capsule from Postgres store."""
     # Save capsule
@@ -93,7 +96,7 @@ async def test_postgres_store_save_and_retrieve(postgres_store, sample_capsule):
     assert retrieved.include_in_rag == sample_capsule.include_in_rag
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio("asyncio")
 async def test_vector_search_with_postgres(postgres_store, sample_capsule):
     """Test: Vector search with actual embeddings in Postgres."""
     # Save capsule
@@ -113,7 +116,7 @@ async def test_vector_search_with_postgres(postgres_store, sample_capsule):
     assert any(c.metadata.capsule_id == sample_capsule.metadata.capsule_id for c, _ in results)
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio("asyncio")
 async def test_pipeline_with_postgres_store(postgres_store):
     """Test: Full pipeline execution with Postgres store."""
     pipeline = DeepMinePipeline(postgres_store)
@@ -146,7 +149,7 @@ async def test_pipeline_with_postgres_store(postgres_store):
     assert len(capsule.neuro_concentrate.summary.split()) >= 70
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio("asyncio")
 async def test_rag_with_postgres_store(postgres_store, sample_capsule):
     """Test: RAG query with Postgres store and vector search."""
     # Save multiple capsules
@@ -174,7 +177,7 @@ async def test_rag_with_postgres_store(postgres_store, sample_capsule):
     assert "metrics" in response.dict()
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio("asyncio")
 async def test_observability_with_postgres(postgres_store, sample_capsule):
     """Test: Observability endpoints with real query logs."""
     # Save capsule and perform queries
@@ -206,7 +209,7 @@ async def test_observability_with_postgres(postgres_store, sample_capsule):
     assert pii is not None
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio("asyncio")
 async def test_scope_filtering_with_postgres(postgres_store):
     """Test: RAG-Scope filtering with Postgres store."""
     # Create capsules with different properties
@@ -236,7 +239,7 @@ async def test_scope_filtering_with_postgres(postgres_store):
     assert response is not None
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio("asyncio")
 async def test_audit_logging_with_postgres(postgres_store, sample_capsule):
     """Test: Audit logging with Postgres store."""
     # Save capsule

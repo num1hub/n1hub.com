@@ -98,6 +98,7 @@ coverage.xml
 
 # Keep the documented example file(s) tracked
 !config/.env.example
+!config/.env.production.example
 
 # ========== IDE / OS artifacts ==========
 # macOS / Windows

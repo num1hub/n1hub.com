@@ -20,7 +20,7 @@ export function Navigation() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <p className="text-xs uppercase tracking-[0.3em] text-white/60">N1Hub v0.1</p>
-          <p className="font-semibold text-white">Anything > Capsules > Graph > Chat</p>
+          <p className="font-semibold text-white">Anything &gt; Capsules &gt; Graph &gt; Chat</p>
         </div>
         <nav className="flex flex-wrap gap-2 text-sm">
           {links.map((link) => (

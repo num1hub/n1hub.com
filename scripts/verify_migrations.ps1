@@ -115,6 +115,17 @@ foreach ($table in $requiredTables) {
 }
 Write-Host ""
 
+# Check vector dimension from migration 0004
+Write-Host "Checking capsule vector dimension..."
+$vectorType = "SELECT format_type(atttypid, atttypmod) FROM pg_attribute WHERE attrelid = 'capsule_vectors'::regclass AND attname = 'embedding';" | psql $DatabaseUrl -tA 2>&1
+if (($vectorType -replace '\s', '') -ne 'vector(384)') {
+    Write-Host "✗ Unexpected embedding column type: $vectorType" -ForegroundColor Red
+    $issues += 1
+} else {
+    Write-Host "✓ Embedding column matches vector(384)" -ForegroundColor Green
+}
+Write-Host ""
+
 # Check indexes (critical ones)
 Write-Host "Checking critical indexes..."
 $criticalIndexes = @(

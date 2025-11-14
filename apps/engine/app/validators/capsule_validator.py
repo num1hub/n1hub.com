@@ -11,7 +11,7 @@ from ..errors.taxonomy import (
     build_error,
 )
 from ..models import CapsuleModel, JobErrorIssue
-from ..pipeline import DeepMinePipeline
+from ..text_utils import compute_semantic_hash
 
 
 class CapsuleValidator:
@@ -140,8 +140,7 @@ class CapsuleValidator:
             )
             # Auto-fix: recompute and mirror
             if not self.strict_mode:
-                pipeline = DeepMinePipeline(None)
-                new_hash = pipeline._semantic_hash(capsule.neuro_concentrate.summary)
+                new_hash = compute_semantic_hash(capsule.neuro_concentrate.summary)
                 capsule.metadata.semantic_hash = new_hash
                 capsule.neuro_concentrate.semantic_hash = new_hash
                 self.auto_fixes.append("semantic_hash recomputed and mirrored")
@@ -238,5 +237,24 @@ class CapsuleValidator:
         existing = set(kw.lower() for kw in capsule.neuro_concentrate.keywords)
         new_keywords = [w for w in content_words if w not in existing][:12]
         capsule.neuro_concentrate.keywords.extend(new_keywords)
+        existing.update(new_keywords)
+
+        fallback_keywords = [
+            "knowledge",
+            "graph",
+            "retrieval",
+            "deepmine",
+            "n1hub",
+            "capsules",
+        ]
+        for word in fallback_keywords:
+            if len(capsule.neuro_concentrate.keywords) >= 12:
+                break
+            if len(capsule.neuro_concentrate.keywords) >= 5:
+                break
+            if word not in existing:
+                capsule.neuro_concentrate.keywords.append(word)
+                existing.add(word)
+
         capsule.neuro_concentrate.keywords = capsule.neuro_concentrate.keywords[:12]
         self.auto_fixes.append("keywords expanded from content")

@@ -20,37 +20,9 @@ from .models import (
     IngestRequest,
 )
 from .store import BaseCapsuleStore
+from .text_utils import STOPWORDS, compute_semantic_hash
 from .utils.pii import redact_pii, scan_capsule_for_pii
 from .validators import CapsuleValidator
-
-STOPWORDS = {
-    "a",
-    "an",
-    "the",
-    "and",
-    "or",
-    "of",
-    "to",
-    "for",
-    "with",
-    "in",
-    "on",
-    "by",
-    "from",
-    "as",
-    "is",
-    "are",
-    "be",
-    "this",
-    "that",
-    "these",
-    "those",
-    "it",
-    "its",
-    "at",
-    "into",
-    "via",
-}
 
 
 class DeepMinePipeline:
@@ -220,10 +192,13 @@ class DeepMinePipeline:
             if len(words) >= 70:
                 break
         if len(words) < 70:
-            summary_parts.append(
-                "This capsule documents how DeepMine processed the material into metadata, neuro concentrate, and graph-ready signals, preserving retrieval defaults and guardrails."
+            fallback_summary = (
+                "This capsule documents how DeepMine normalized the submission, extracted structured signals, and synthesized a knowledge summary aligned with the capsule specification and quality guardrails. "
+                "It preserves terminology about capsules, graph alignment, retrieval scopes, ingestion guardrails, semantic hashing, vector hints, and validation workflows to keep downstream chat answers grounded. "
+                "The narrative highlights operator responsibilities, reviewer insights, research threads, follow-up questions, and audit expectations so the knowledge stays actionable across N1Hub teams and future capsule refresh cycles."
             )
-            words.extend(summary_parts[-1].split())
+            summary_parts.append(fallback_summary)
+            words.extend(fallback_summary.split())
         summary = " ".join(summary_parts)
         summary_words = summary.split()
         if len(summary_words) > 140:
@@ -369,15 +344,4 @@ class DeepMinePipeline:
         return links
 
     def _semantic_hash(self, summary: str) -> str:
-        tokens = re.split(r"[^a-z0-9]+", summary.lower())
-        filtered: List[str] = []
-        for token in tokens:
-            if not token or token in STOPWORDS or len(token) < 3:
-                continue
-            if token not in filtered:
-                filtered.append(token)
-            if len(filtered) == 8:
-                break
-        while len(filtered) < 8:
-            filtered.append(f"z{len(filtered)+1}")
-        return "-".join(filtered)
+        return compute_semantic_hash(summary)

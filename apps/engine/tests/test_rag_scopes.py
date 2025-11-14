@@ -1,7 +1,8 @@
 """Integration tests for RAG-Scope profiles (Section 10)."""
 
-import pytest
+import asyncio
 from datetime import datetime, timezone, timedelta
+
 from app.store import MemoryCapsuleStore
 from app.rag import answer_chat, _parse_scope, _filter_by_scope_type
 from app.models import ChatRequest, CapsuleModel, CapsuleMetadata, CapsuleCorePayload, CapsuleNeuroConcentrate, CapsuleRecursive, SourceDescriptor
@@ -64,16 +65,14 @@ def create_test_capsule(
     )
 
 
-@pytest.mark.asyncio
-async def test_parse_scope_defaults_to_my():
+def test_parse_scope_defaults_to_my():
     """Test empty scope defaults to 'my'."""
     scope_type, tags = _parse_scope([])
     assert scope_type == "my"
     assert tags == []
 
 
-@pytest.mark.asyncio
-async def test_parse_scope_types():
+def test_parse_scope_types():
     """Test scope type parsing."""
     assert _parse_scope(["my"]) == ("my", [])
     assert _parse_scope(["public"]) == ("public", [])
@@ -81,8 +80,7 @@ async def test_parse_scope_types():
     assert _parse_scope(["tag1", "tag2"]) == ("tags", ["tag1", "tag2"])
 
 
-@pytest.mark.asyncio
-async def test_filter_by_scope_type_my():
+def test_filter_by_scope_type_my():
     """Test 'my' scope filters active capsules with include_in_rag=true."""
     capsules = [
         create_test_capsule("c1", include_in_rag=True, status="active"),
@@ -94,8 +92,7 @@ async def test_filter_by_scope_type_my():
     assert filtered[0].metadata.capsule_id == "c1"
 
 
-@pytest.mark.asyncio
-async def test_filter_by_scope_type_inbox():
+def test_filter_by_scope_type_inbox():
     """Test 'inbox' scope filters by last 30 days."""
     capsules = [
         create_test_capsule("c1", created_days_ago=10, include_in_rag=True, status="active"),
@@ -109,8 +106,7 @@ async def test_filter_by_scope_type_inbox():
     assert "c2" not in [c.metadata.capsule_id for c in filtered]
 
 
-@pytest.mark.asyncio
-async def test_filter_by_scope_type_public():
+def test_filter_by_scope_type_public():
     """Test 'public' scope filters active capsules."""
     capsules = [
         create_test_capsule("c1", include_in_rag=True, status="active"),
@@ -122,29 +118,29 @@ async def test_filter_by_scope_type_public():
     assert filtered[0].metadata.capsule_id == "c1"
 
 
-@pytest.mark.asyncio
-async def test_filter_by_scope_type_tags():
+def test_filter_by_scope_type_tags():
     """Test 'tags' scope doesn't filter (tags handled in search)."""
     capsules = [
-        create_test_capsule("c1", tags=["tag1"], include_in_rag=True),
-        create_test_capsule("c2", tags=["tag2"], include_in_rag=True),
+        create_test_capsule("c1", tags=["tag1", "alpha", "beta"], include_in_rag=True),
+        create_test_capsule("c2", tags=["tag2", "gamma", "delta"], include_in_rag=True),
     ]
     filtered = _filter_by_scope_type(capsules, "tags")
     assert len(filtered) == 2  # All included, tag filtering happens in search
 
 
-@pytest.mark.asyncio
-async def test_answer_chat_with_my_scope():
+def test_answer_chat_with_my_scope():
     """Test chat with 'my' scope."""
-    store = MemoryCapsuleStore()
-    capsule1 = create_test_capsule("c1", include_in_rag=True, status="active")
-    capsule2 = create_test_capsule("c2", include_in_rag=False, status="active")  # Should be excluded
-    await store.save_capsule(capsule1)
-    await store.save_capsule(capsule2)
-    
-    request = ChatRequest(query="test query", scope=["my"])
-    response = await answer_chat(store, request)
-    
-    # Should only use capsule1 (include_in_rag=true, active)
-    assert response is not None
-    # Note: Actual answer depends on LLM availability, but scope filtering should work
+
+    async def _run() -> None:
+        store = MemoryCapsuleStore()
+        capsule1 = create_test_capsule("c1", include_in_rag=True, status="active")
+        capsule2 = create_test_capsule("c2", include_in_rag=False, status="active")  # Should be excluded
+        await store.save_capsule(capsule1)
+        await store.save_capsule(capsule2)
+
+        request = ChatRequest(query="test query", scope=["my"])
+        response = await answer_chat(store, request)
+
+        assert response is not None
+
+    asyncio.run(_run())

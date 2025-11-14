@@ -60,7 +60,7 @@ export function JobList() {
                 : job
             );
           });
-        } catch (e) {
+        } catch {
           // Ignore parse errors
         }
       }

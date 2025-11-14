@@ -64,11 +64,12 @@ if [[ -z "$DATABASE_URL" ]]; then
 fi
 
 # Migration files in order
-MIGRATIONS=(
-    "0001_capsule_store.sql"
-    "0002_validation_and_links.sql"
-    "0003_audit_logs.sql"
-)
+mapfile -t MIGRATIONS < <(find "$SQL_DIR" -maxdepth 1 -type f -name '[0-9][0-9][0-9][0-9]_*.sql' -print | sort)
+
+if [[ ${#MIGRATIONS[@]} -eq 0 ]]; then
+    echo -e "${RED}Error: no migration files found in ${SQL_DIR}${NC}" >&2
+    exit 1
+fi
 
 echo -e "${GREEN}>>> N1Hub Database Migration Runner${NC}"
 echo "Database: ${DATABASE_URL%%@*}@***"
@@ -76,12 +77,12 @@ echo ""
 
 if [[ "$DRY_RUN" == "true" ]]; then
     echo -e "${YELLOW}[DRY RUN] Would execute the following migrations:${NC}"
-    for migration in "${MIGRATIONS[@]}"; do
-        migration_path="${SQL_DIR}/${migration}"
+    for migration_path in "${MIGRATIONS[@]}"; do
+        migration_file="$(basename "$migration_path")"
         if [[ -f "$migration_path" ]]; then
-            echo "  - $migration"
+            echo "  - $migration_file"
         else
-            echo -e "  ${RED}- $migration (NOT FOUND)${NC}"
+            echo -e "  ${RED}- $migration_file (NOT FOUND)${NC}"
         fi
     done
     exit 0
@@ -107,23 +108,23 @@ echo ""
 SUCCESS_COUNT=0
 FAILED_MIGRATIONS=()
 
-for migration in "${MIGRATIONS[@]}"; do
-    migration_path="${SQL_DIR}/${migration}"
-    
+for migration_path in "${MIGRATIONS[@]}"; do
+    migration_file="$(basename "$migration_path")"
+
     if [[ ! -f "$migration_path" ]]; then
-        echo -e "${RED}✗ Migration file not found: $migration${NC}"
-        FAILED_MIGRATIONS+=("$migration")
+        echo -e "${RED}✗ Migration file not found: $migration_file${NC}"
+        FAILED_MIGRATIONS+=("$migration_file")
         continue
     fi
-    
-    echo -e "${YELLOW}Running migration: $migration${NC}"
-    
+
+    echo -e "${YELLOW}Running migration: $migration_file${NC}"
+
     if psql "$DATABASE_URL" -f "$migration_path" > /dev/null 2>&1; then
-        echo -e "${GREEN}✓ Migration completed: $migration${NC}"
+        echo -e "${GREEN}✓ Migration completed: $migration_file${NC}"
         ((SUCCESS_COUNT++))
     else
-        echo -e "${RED}✗ Migration failed: $migration${NC}"
-        FAILED_MIGRATIONS+=("$migration")
+        echo -e "${RED}✗ Migration failed: $migration_file${NC}"
+        FAILED_MIGRATIONS+=("$migration_file")
         # Show error details
         psql "$DATABASE_URL" -f "$migration_path" 2>&1 | tail -5
     fi
