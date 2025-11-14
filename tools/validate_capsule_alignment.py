@@ -28,6 +28,7 @@ REQUIRED_PATHS = [
     "apps/engine/app/utils/pii.py",
     "infra/sql/0001_capsule_store.sql",
     "config/.env.example",
+    "config/.env.production.example",
 ]
 
 

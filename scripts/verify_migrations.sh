@@ -158,6 +158,17 @@ if [[ ${#MISSING_TABLES[@]} -gt 0 ]]; then
     ISSUES=$((ISSUES + ${#MISSING_TABLES[@]}))
 fi
 
+# Check vector dimension from migration 0004
+echo "Checking capsule vector dimension..."
+VECTOR_TYPE=$(psql "$DATABASE_URL" -tAc "SELECT format_type(atttypid, atttypmod) FROM pg_attribute WHERE attrelid = 'capsule_vectors'::regclass AND attname = 'embedding';")
+if [[ "${VECTOR_TYPE//[[:space:]]/}" != "vector(384)" ]]; then
+    echo -e "${RED}✗ Unexpected embedding column type: ${VECTOR_TYPE}${NC}"
+    ISSUES=$((ISSUES + 1))
+else
+    echo -e "${GREEN}✓ Embedding column matches vector(384)${NC}"
+fi
+echo ""
+
 if [[ $ISSUES -eq 0 ]]; then
     echo -e "${GREEN}✓ All migrations verified successfully${NC}"
     echo "Required tables: ${#REQUIRED_TABLES[@]}"

@@ -1,6 +1,6 @@
 # N1Hub v0.1 Architecture
 
-> **Scope.** This document describes the production architecture of the `num1hub/n1hub.com` monorepo exactly as implemented in the repository snapshot that contains `apps/engine/**`, `apps/interface/**`, `app/**`, `components/**`, `infra/sql/**`, `infra/docker-compose.yml`, `scripts/**`, and `docs/**`. All file and module names referenced below exist in this tree. 
+> **Scope.** This document describes the production architecture of the `num1hub/n1hub.com` monorepo exactly as implemented in the repository snapshot that contains `apps/engine/**`, `app/**`, `components/**`, `infra/sql/**`, `infra/docker-compose.yml`, `scripts/**`, and `docs/**`. All file and module names referenced below exist in this tree.
 
 ---
 
@@ -9,7 +9,7 @@
 **N1Hub.com** is an AI‑native knowledge system implemented as a Node workspaces monorepo with a Python FastAPI backend and a Next.js App Router frontend. The system ingests “anything,” transforms it into strictly validated **Capsules** via a **DeepMine** pipeline, links capsules into a graph, and serves grounded chat with strict citations using a hybrid **semantic + lexical RAG** engine over PostgreSQL with **pgvector**.  
 
 * **Backend (FastAPI)** — `apps/engine/`: pipeline, validators, link suggestions, vectorizer (SentenceTransformers), RAG, audit logging, SSE events, observability. 
-* **Frontend (Next.js interface)** — `apps/interface/`: App Router pages (`/capsules`, `/chat`, `/graph`, `/inbox`) and API proxy routes (`/api/capsules`, `/api/chat`, `/api/import`, `/api/jobs`, `/api/events/stream`). 
+* **Frontend (Next.js interface)** — `app/`: App Router pages (`/capsules`, `/chat`, `/graph`, `/inbox`) and API proxy routes (`/api/capsules`, `/api/chat`, `/api/import`, `/api/jobs`, `/api/events/stream`). 
 * **Root Next.js app & shared UI** — `app/` and `components/` provide a root UI (landing/layout) and a shared **shadcn/ui** component library. 
 * **Infra** — PostgreSQL + Redis via `infra/docker-compose.yml`, SQL migrations under `infra/sql/0001–0004`. 
 * **Scripts & CI** — Dev/migration scripts (`scripts/**`) and CI gates (`.github/workflows/ci.yml`) enforce linting, tests, migrations verification, env validation, and capsule spec alignment.  
@@ -31,7 +31,7 @@
 ```mermaid
 flowchart LR
     subgraph Browser["User (Browser)"]
-      UI[Next.js Interface<br/>apps/interface]
+      UI[Next.js Interface<br/>app]
     end
 
     subgraph Frontend["Frontend (Vercel/local)"]
@@ -72,7 +72,7 @@ Key directories and files:
 
 * **Backend (engine)** — `apps/engine/app/`
   `pipeline.py`, `rag.py`, `vectorizer.py`, `store_pg.py`, `events.py`, `retention.py`, `errors/taxonomy.py`, `validators/capsule_validator.py`, `observability.py`, `main.py`, plus `linking/link_suggester.py`, `utils/pii.py`, and config/bootstrap modules. 
-* **Frontend (interface)** — `apps/interface/app/`
+* **Frontend (interface)** — `app/`
   Pages: `capsules/page.tsx`, `capsules/[id]/page.tsx`, `chat/page.tsx`, `graph/page.tsx`, `inbox/page.tsx`.
   API routes: `api/capsules/route.ts`, `api/capsules/[id]/route.ts`, `api/chat/route.ts`, `api/import/route.ts`, `api/jobs/route.ts`, `api/jobs/[id]/route.ts`, `api/events/stream/route.ts`.
   Libraries: `lib/api.ts`, `lib/engine-proxy.ts`, `lib/server-client.ts`, `lib/state.ts`, `lib/types.ts`, `lib/utils.ts`.
@@ -142,7 +142,7 @@ The `vectorizer.py` module integrates **SentenceTransformers** to produce dense 
 ### 7) Job system
 
 * Ingestion processes are tracked as **jobs** persisted in Postgres and surfaced via API; the interface exposes `/inbox` and `/api/jobs` (proxying to the engine’s job endpoints). Tests such as `tests/test_ingest_job.py` and `tests/test_e2e_workflow.py` validate job lifecycle.  
-* UI components like `apps/interface/components/job-list.tsx` and routes `apps/interface/app/api/jobs/*.ts` implement job listing and status polling. 
+* UI components like `components/job-list.tsx` and routes `app/api/jobs/*.ts` implement job listing and status polling. 
 
 ### 8) Audit logging
 
@@ -160,9 +160,9 @@ The `vectorizer.py` module integrates **SentenceTransformers** to produce dense 
 
 ---
 
-## F. Frontend Architecture (apps/interface)
+## F. Frontend Architecture (app)
 
-The **primary user interface** is the Next.js App Router app in `apps/interface/`. It renders the end‑user experience (inbox, capsules, graph, chat) and **proxies** API calls to the engine. 
+The **primary user interface** is the Next.js App Router app in `app/`. It renders the end‑user experience (inbox, capsules, graph, chat) and **proxies** API calls to the engine. 
 
 ### 1) App Router routes
 
@@ -183,7 +183,7 @@ The **primary user interface** is the Next.js App Router app in `apps/interface/
 
 ### 2) API proxy layer
 
-* `apps/interface/lib/engine-proxy.ts` centralizes outbound calls from the interface to the engine; `lib/api.ts` and `lib/server-client.ts` provide typed fetch and server/client helpers. Environment variables such as `NEXT_PUBLIC_API_URL` and `NEXT_PUBLIC_SSE_URL` configure endpoints, as shown in the README.  
+* `lib/engine-proxy.ts` centralizes outbound calls from the interface to the engine; `lib/api.ts` and `lib/server-client.ts` provide typed fetch and server/client helpers. Environment variables such as `NEXT_PUBLIC_API_URL` and `NEXT_PUBLIC_SSE_URL` configure endpoints, as shown in the README.  
 
 ### 3) SSE event stream
 
@@ -229,7 +229,7 @@ Local services (Postgres + Redis) are provisioned through `infra/docker-compose.
 
 ### 1) Narrative
 
-1. **User action (upload/chat).** The browser (Next.js interface) submits to App Router API routes under `apps/interface/app/api/*`. 
+1. **User action (upload/chat).** The browser (Next.js interface) submits to App Router API routes under `app/api/*`. 
 2. **API proxy.** The interface forwards requests to the engine using `lib/engine-proxy.ts` and related helpers. 
 3. **Ingestion pipeline.** The engine receives ingest requests and runs the **DeepMine** pipeline in `pipeline.py` with validation (`validators/capsule_validator.py`), linking (`linking/link_suggester.py`), and vectorization (`vectorizer.py`). 
 4. **Persistence.** Capsules, vectors, jobs, and logs are persisted in Postgres via `store_pg.py` using the schema from `infra/sql/*.sql`. 
@@ -264,7 +264,7 @@ sequenceDiagram
 
 ```mermaid
 graph TD
-  A[apps/interface] -- API / SSR --> B[apps/engine]
+  A[app] -- API / SSR --> B[apps/engine]
   B -- pgvector I/O --> C[(Postgres)]
   B -- cache/events --> D[(Redis)]
   A -- SSE via /api/events/stream --> B
@@ -325,7 +325,7 @@ Hybrid retrieval and strict citation behavior are documented in the project READ
 ## Repository Pointers
 
 * **Engine modules:** `pipeline.py`, `rag.py`, `vectorizer.py`, `store_pg.py`, `validators/capsule_validator.py`, `events.py`, `retention.py`, `errors/taxonomy.py`, `observability.py`, `main.py`. 
-* **Interface modules:** `apps/interface/app/*`, `apps/interface/app/api/*`, `apps/interface/components/*`, `apps/interface/lib/*`. 
+* **Interface modules:** `app/*`, `app/api/*`, `components/*`, `lib/*`. 
 * **Root UI:** `app/*`, `components/*`. 
 * **Infra:** `infra/sql/0001..0004`, `infra/docker-compose.yml`. 
 * **Scripts:** `scripts/dev-win.ps1`, `scripts/dev.sh`, `scripts/migrate.*`, `scripts/verify_migrations.*`, `scripts/validate_env.py`. 

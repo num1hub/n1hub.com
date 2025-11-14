@@ -46,11 +46,12 @@ if ([string]::IsNullOrEmpty($DatabaseUrl)) {
 }
 
 # Migration files in order
-$migrations = @(
-    "0001_capsule_store.sql",
-    "0002_validation_and_links.sql",
-    "0003_audit_logs.sql"
-)
+$migrations = Get-ChildItem -Path $sqlDir -File -Filter '????_*.sql' | Sort-Object Name | Select-Object -ExpandProperty FullName
+
+if ($null -eq $migrations -or $migrations.Count -eq 0) {
+    Write-Host "Error: no migration files found in $sqlDir" -ForegroundColor Red
+    exit 1
+}
 
 Write-Host ">>> N1Hub Database Migration Runner" -ForegroundColor Green
 $dbDisplay = $DatabaseUrl -replace ':[^:@]+@', ':***@'
@@ -59,12 +60,12 @@ Write-Host ""
 
 if ($DryRun) {
     Write-Host "[DRY RUN] Would execute the following migrations:" -ForegroundColor Yellow
-    foreach ($migration in $migrations) {
-        $migrationPath = Join-Path $sqlDir $migration
+    foreach ($migrationPath in $migrations) {
+        $migrationFile = Split-Path $migrationPath -Leaf
         if (Test-Path $migrationPath) {
-            Write-Host "  - $migration"
+            Write-Host "  - $migrationFile"
         } else {
-            Write-Host "  - $migration (NOT FOUND)" -ForegroundColor Red
+            Write-Host "  - $migrationFile (NOT FOUND)" -ForegroundColor Red
         }
     }
     exit 0
@@ -98,32 +99,32 @@ Write-Host ""
 $successCount = 0
 $failedMigrations = @()
 
-foreach ($migration in $migrations) {
-    $migrationPath = Join-Path $sqlDir $migration
-    
+foreach ($migrationPath in $migrations) {
+    $migrationFile = Split-Path $migrationPath -Leaf
+
     if (-not (Test-Path $migrationPath)) {
-        Write-Host "✗ Migration file not found: $migration" -ForegroundColor Red
-        $failedMigrations += $migration
+        Write-Host "✗ Migration file not found: $migrationFile" -ForegroundColor Red
+        $failedMigrations += $migrationFile
         continue
     }
-    
-    Write-Host "Running migration: $migration" -ForegroundColor Yellow
-    
+
+    Write-Host "Running migration: $migrationFile" -ForegroundColor Yellow
+
     try {
         Get-Content $migrationPath | psql $DatabaseUrl 2>&1 | Out-Null
         if ($LASTEXITCODE -eq 0) {
-            Write-Host "✓ Migration completed: $migration" -ForegroundColor Green
+            Write-Host "✓ Migration completed: $migrationFile" -ForegroundColor Green
             $successCount++
         } else {
-            Write-Host "✗ Migration failed: $migration" -ForegroundColor Red
-            $failedMigrations += $migration
+            Write-Host "✗ Migration failed: $migrationFile" -ForegroundColor Red
+            $failedMigrations += $migrationFile
             # Show error details
             Get-Content $migrationPath | psql $DatabaseUrl 2>&1 | Select-Object -Last 5
         }
     } catch {
-        Write-Host "✗ Migration failed: $migration" -ForegroundColor Red
+        Write-Host "✗ Migration failed: $migrationFile" -ForegroundColor Red
         Write-Host "Error: $_" -ForegroundColor Red
-        $failedMigrations += $migration
+        $failedMigrations += $migrationFile
     }
     Write-Host ""
 }
