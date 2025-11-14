@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import time
-from typing import Optional
+from typing import Mapping, Optional
 
-from fastapi import HTTPException, Request, Response, status
+from fastapi import Request, Response, status
+from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from .config import settings
@@ -41,9 +42,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         # Identify user (for now, use IP address; in production, use auth token)
         user_id = self._get_user_id(request)
         
-        # Determine rate limit based on endpoint
+        # Determine rate limit based on endpoint and query parameters
         endpoint = request.url.path
-        limit, window = self._get_rate_limit(endpoint)
+        limit, window = self._get_rate_limit(endpoint, request.query_params)
         
         if limit is None:
             # No rate limit for this endpoint
@@ -63,9 +64,11 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         
         if not allowed:
             retry_after = int(window - (current_time % window))
-            raise HTTPException(
+            if retry_after <= 0:
+                retry_after = window
+            return JSONResponse(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                detail="Rate limit exceeded",
+                content={"detail": "Rate limit exceeded"},
                 headers={"Retry-After": str(retry_after)},
             )
         
@@ -80,17 +83,17 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             return forwarded.split(",")[0].strip()
         return request.client.host if request.client else "unknown"
 
-    def _get_rate_limit(self, endpoint: str) -> tuple[Optional[int], int]:
+    def _get_rate_limit(self, endpoint: str, query_params: Mapping[str, str]) -> tuple[Optional[int], int]:
         """Get rate limit for endpoint."""
         window = 60  # 1 minute window
-        
+
         if endpoint == "/ingest":
             return settings.rate_limit_upload, window
         elif endpoint == "/chat":
             return settings.rate_limit_chat, window
-        elif endpoint.startswith("/capsules") and "scope=public" in str(endpoint):
+        elif endpoint == "/capsules" and query_params.get("scope") == "public":
             return settings.rate_limit_public, window
-        
+
         return None, window
 
     async def _check_redis_limit(
