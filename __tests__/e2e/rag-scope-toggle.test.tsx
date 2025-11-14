@@ -22,7 +22,7 @@ const {
   const mockGetScopeForAPI = vi.fn(() => ['my']);
   const mockUseRagScope = vi.fn(() => ({
     scopeType: 'my',
-    scope: [],
+    scope: [] as string[],
     setScopeType: mockSetScopeType,
     toggleTag: mockToggleTag,
     setScope: mockSetScope,
@@ -48,7 +48,7 @@ describe('RAG-Scope Toggle E2E', () => {
     mockGetScopeForAPI.mockReturnValue(['my']);
     mockUseRagScope.mockReturnValue({
       scopeType: 'my',
-      scope: [],
+      scope: [] as string[],
       setScopeType: mockSetScopeType,
       toggleTag: mockToggleTag,
       setScope: mockSetScope,
@@ -79,7 +79,7 @@ describe('RAG-Scope Toggle E2E', () => {
     mockGetScopeForAPI.mockReturnValue(['tag1']);
     mockUseRagScope.mockReturnValue({
       scopeType: 'tags',
-      scope: ['tag1'],
+      scope: ['tag1'] as string[],
       setScopeType: mockSetScopeType,
       toggleTag: mockToggleTag,
       setScope: mockSetScope,
@@ -97,7 +97,7 @@ describe('RAG-Scope Toggle E2E', () => {
     mockGetScopeForAPI.mockReturnValue(['tag1']);
     mockUseRagScope.mockReturnValue({
       scopeType: 'tags',
-      scope: ['tag1'],
+      scope: ['tag1'] as string[],
       setScopeType: mockSetScopeType,
       toggleTag: mockToggleTag,
       setScope: mockSetScope,

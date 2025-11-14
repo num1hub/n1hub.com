@@ -20,37 +20,9 @@ from .models import (
     IngestRequest,
 )
 from .store import BaseCapsuleStore
+from .text_utils import STOPWORDS, compute_semantic_hash
 from .utils.pii import redact_pii, scan_capsule_for_pii
 from .validators import CapsuleValidator
-
-STOPWORDS = {
-    "a",
-    "an",
-    "the",
-    "and",
-    "or",
-    "of",
-    "to",
-    "for",
-    "with",
-    "in",
-    "on",
-    "by",
-    "from",
-    "as",
-    "is",
-    "are",
-    "be",
-    "this",
-    "that",
-    "these",
-    "those",
-    "it",
-    "its",
-    "at",
-    "into",
-    "via",
-}
 
 
 class DeepMinePipeline:
@@ -369,15 +341,4 @@ class DeepMinePipeline:
         return links
 
     def _semantic_hash(self, summary: str) -> str:
-        tokens = re.split(r"[^a-z0-9]+", summary.lower())
-        filtered: List[str] = []
-        for token in tokens:
-            if not token or token in STOPWORDS or len(token) < 3:
-                continue
-            if token not in filtered:
-                filtered.append(token)
-            if len(filtered) == 8:
-                break
-        while len(filtered) < 8:
-            filtered.append(f"z{len(filtered)+1}")
-        return "-".join(filtered)
+        return compute_semantic_hash(summary)
