@@ -1,8 +1,12 @@
 import time
 
+import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
+
+
+pytestmark = pytest.mark.integration
 
 
 def test_ingest_pipeline_creates_job_and_capsule():

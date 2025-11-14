@@ -56,7 +56,7 @@ export function CapsuleDetail({ capsule }: { capsule: Capsule }) {
           {capsule.recursive.links.map((link) => (
             <div key={`${link.rel}-${link.target_capsule_id}`} className="rounded-xl bg-black/30 px-3 py-2">
               <p>
-                {link.rel} > {link.target_capsule_id} ({(link.confidence * 100).toFixed(0)}%)
+                {link.rel} &gt; {link.target_capsule_id} ({(link.confidence * 100).toFixed(0)}%)
               </p>
               <p className="text-xs text-white/50">{link.reason}</p>
             </div>

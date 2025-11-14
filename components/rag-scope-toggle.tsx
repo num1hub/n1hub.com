@@ -11,7 +11,7 @@ const SCOPE_TYPES = [
 ] as const;
 
 export function RagScopeToggle({ availableTags }: { availableTags: string[] }) {
-  const { scopeType, scope, setScopeType, toggleTag, setScope } = useRagScope();
+  const { scopeType, scope, setScopeType, toggleTag } = useRagScope();
 
   return (
     <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">

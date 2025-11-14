@@ -9,6 +9,11 @@ from ulid import ULID
 
 from .models import CapsuleModel, ChatRequest, JobModel
 
+try:  # pragma: no cover - optional dependency for postgres operations
+    from .store_pg import PostgresCapsuleStore
+except Exception:  # pragma: no cover
+    PostgresCapsuleStore = None  # type: ignore[assignment]
+
 
 class BaseCapsuleStore(ABC):
     @abstractmethod

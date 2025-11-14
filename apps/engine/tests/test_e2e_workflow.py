@@ -16,6 +16,9 @@ from app.models import ChatRequest
 from app.store import MemoryCapsuleStore
 
 
+pytestmark = pytest.mark.integration
+
+
 @pytest.fixture
 def client():
     """Create test client with fresh store."""

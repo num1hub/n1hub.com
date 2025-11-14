@@ -46,7 +46,7 @@ export function CapsuleCard({ capsule }: { capsule: Capsule }) {
       </div>
       <div className="mt-5 flex items-center gap-3">
         <Button
-          variant={capsule.include_in_rag ? "ghost" : "primary"}
+          variant={capsule.include_in_rag ? "ghost" : "default"}
           disabled={isPending}
           onClick={() => mutateAsync(!capsule.include_in_rag)}
         >

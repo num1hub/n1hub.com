@@ -1,8 +1,6 @@
-import { NextRequest } from "next/server";
-
 const ENGINE_BASE_URL = process.env.ENGINE_BASE_URL ?? "http://127.0.0.1:8000";
 
-export async function GET(_: NextRequest) {
+export async function GET() {
   const response = await fetch(`${ENGINE_BASE_URL}/events/stream`, {
     headers: {
       "Cache-Control": "no-cache",

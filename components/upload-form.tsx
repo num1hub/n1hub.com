@@ -3,7 +3,7 @@
 import { useId, useState } from "react";
 import { ingestMaterial } from "@/lib/api";
 import { Input } from "@/components/ui/input";
-import { TextArea } from "@/components/ui/textarea";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -75,7 +75,7 @@ export function UploadForm() {
           <label htmlFor={materialId} className="text-sm font-semibold text-white">
             Material
           </label>
-          <TextArea
+          <Textarea
             id={materialId}
             rows={6}
             value={content}

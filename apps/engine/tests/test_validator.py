@@ -1,6 +1,6 @@
 """Tests for CapsuleValidator."""
 
-import pytest
+import asyncio
 from datetime import datetime, timezone
 
 from app.models import (
@@ -74,95 +74,110 @@ def create_test_capsule(**overrides) -> CapsuleModel:
     )
 
 
-@pytest.mark.asyncio
-async def test_validator_passes_valid_capsule():
+def test_validator_passes_valid_capsule():
     """Test validator passes a valid capsule."""
-    capsule = create_test_capsule()
-    validator = CapsuleValidator(strict_mode=False)
-    is_valid, errors, warnings = await validator.validate(capsule)
-    assert is_valid is True
-    assert len(errors) == 0
+
+    async def _run() -> None:
+        capsule = create_test_capsule()
+        validator = CapsuleValidator(strict_mode=False)
+        is_valid, errors, warnings = await validator.validate(capsule)
+        assert is_valid is True
+        assert len(errors) == 0
+
+    asyncio.run(_run())
 
 
-@pytest.mark.asyncio
-async def test_validator_fixes_summary_length():
+def test_validator_fixes_summary_length():
     """Test validator auto-fixes summary length violations."""
-    # Too short
-    capsule = create_test_capsule(
-        neuro_concentrate={"summary": " ".join(["word"] * 50)}  # 50 words
-    )
-    validator = CapsuleValidator(strict_mode=False)
-    is_valid, errors, warnings = await validator.validate(capsule)
-    assert len(errors) > 0
-    assert any("summary" in e.path.lower() for e in errors)
-    assert len(validator.auto_fixes) > 0
-    
-    # Too long
-    capsule = create_test_capsule(
-        neuro_concentrate={"summary": " ".join(["word"] * 150)}  # 150 words
-    )
-    validator = CapsuleValidator(strict_mode=False)
-    is_valid, errors, warnings = await validator.validate(capsule)
-    assert len(errors) > 0
-    # Should auto-fix by trimming
-    assert len(capsule.neuro_concentrate.summary.split()) <= 140
+
+    async def _run() -> None:
+        capsule = create_test_capsule(
+            neuro_concentrate={"summary": " ".join(["word"] * 50)}
+        )
+        validator = CapsuleValidator(strict_mode=False)
+        is_valid, errors, warnings = await validator.validate(capsule)
+        assert len(errors) > 0
+        assert any("summary" in e.path.lower() for e in errors)
+        assert len(validator.auto_fixes) > 0
+
+        capsule = create_test_capsule(
+            neuro_concentrate={"summary": " ".join(["word"] * 150)}
+        )
+        validator = CapsuleValidator(strict_mode=False)
+        is_valid, errors, warnings = await validator.validate(capsule)
+        assert len(errors) > 0
+        assert len(capsule.neuro_concentrate.summary.split()) <= 140
+
+    asyncio.run(_run())
 
 
-@pytest.mark.asyncio
-async def test_validator_fixes_semantic_hash_mismatch():
+def test_validator_fixes_semantic_hash_mismatch():
     """Test validator fixes semantic hash mismatch."""
-    capsule = create_test_capsule(
-        metadata={"semantic_hash": "different-hash-value"},
-        neuro_concentrate={"semantic_hash": "test-capsule-validation-summary-keywords-vector-hint-archetypes"}
-    )
-    validator = CapsuleValidator(strict_mode=False)
-    is_valid, errors, warnings = await validator.validate(capsule)
-    assert len(errors) > 0
-    assert any("semantic_hash" in e.path for e in errors)
-    # Should auto-fix by recomputing and mirroring
-    assert capsule.metadata.semantic_hash == capsule.neuro_concentrate.semantic_hash
+
+    async def _run() -> None:
+        capsule = create_test_capsule(
+            metadata={"semantic_hash": "different-hash-value"},
+            neuro_concentrate={"semantic_hash": "test-capsule-validation-summary-keywords-vector-hint-archetypes"}
+        )
+        validator = CapsuleValidator(strict_mode=False)
+        is_valid, errors, warnings = await validator.validate(capsule)
+        assert len(errors) > 0
+        assert any("semantic_hash" in e.path for e in errors)
+        assert capsule.metadata.semantic_hash == capsule.neuro_concentrate.semantic_hash
+
+    asyncio.run(_run())
 
 
-@pytest.mark.asyncio
-async def test_validator_clamps_emotional_charge():
+def test_validator_clamps_emotional_charge():
     """Test validator clamps emotional_charge to [-1, 1]."""
-    capsule = create_test_capsule(
-        neuro_concentrate={"emotional_charge": 1.5}  # Out of range
-    )
-    validator = CapsuleValidator(strict_mode=False)
-    await validator.validate(capsule)
-    assert -1.0 <= capsule.neuro_concentrate.emotional_charge <= 1.0
+
+    async def _run() -> None:
+        capsule = create_test_capsule(
+            neuro_concentrate={"emotional_charge": 1.5}
+        )
+        validator = CapsuleValidator(strict_mode=False)
+        await validator.validate(capsule)
+        assert -1.0 <= capsule.neuro_concentrate.emotional_charge <= 1.0
+
+    asyncio.run(_run())
 
 
-@pytest.mark.asyncio
-async def test_validator_expands_keywords():
+def test_validator_expands_keywords():
     """Test validator expands keywords if too few."""
-    capsule = create_test_capsule(
-        neuro_concentrate={"keywords": ["test", "capsule"]}  # Only 2 keywords
-    )
-    validator = CapsuleValidator(strict_mode=False)
-    is_valid, errors, warnings = await validator.validate(capsule)
-    assert len(errors) > 0
-    # Should auto-fix by expanding
-    assert len(capsule.neuro_concentrate.keywords) >= 5
+
+    async def _run() -> None:
+        capsule = create_test_capsule()
+        nc_data = capsule.neuro_concentrate.model_dump()
+        nc_data["keywords"] = ["test", "capsule"]
+        capsule.neuro_concentrate = CapsuleNeuroConcentrate.model_construct(**nc_data)
+        validator = CapsuleValidator(strict_mode=False)
+        is_valid, errors, warnings = await validator.validate(capsule)
+        assert len(errors) > 0
+        assert len(capsule.neuro_concentrate.keywords) >= 5
+
+    asyncio.run(_run())
 
 
-@pytest.mark.asyncio
-async def test_validator_validates_link_confidence():
+def test_validator_validates_link_confidence():
     """Test validator validates link confidence ranges."""
-    from app.models import CapsuleLink
-    capsule = create_test_capsule(
-        recursive={
-            "links": [
-                CapsuleLink(
-                    rel="references",
-                    target_capsule_id="01JGXM0000000000000000TARG",
-                    reason="test",
-                    confidence=1.5,  # Out of range
-                )
-            ]
-        }
-    )
-    validator = CapsuleValidator(strict_mode=False)
-    await validator.validate(capsule)
-    assert 0.0 <= capsule.recursive.links[0].confidence <= 1.0
+
+    async def _run() -> None:
+        from app.models import CapsuleLink
+
+        capsule = create_test_capsule(
+            recursive={
+                "links": [
+                    CapsuleLink(
+                        rel="references",
+                        target_capsule_id="01JGXM0000000000000000TARG",
+                        reason="test",
+                        confidence=1.5,
+                    )
+                ]
+            }
+        )
+        validator = CapsuleValidator(strict_mode=False)
+        await validator.validate(capsule)
+        assert 0.0 <= capsule.recursive.links[0].confidence <= 1.0
+
+    asyncio.run(_run())

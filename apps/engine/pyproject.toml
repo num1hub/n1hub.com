@@ -18,8 +18,17 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8.1.0"]
+dev = [
+  "pytest>=8.1.0",
+  "pytest-asyncio>=0.23.0",
+]
 
 [build-system]
 requires = ["setuptools>=68.0"]
 build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+markers = [
+  "integration: requires external services or long-running workflows",
+  "vectorizer_no_stub: disable automatic vectorizer stubbing for explicit tests",
+]

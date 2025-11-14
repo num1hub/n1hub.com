@@ -36,12 +36,12 @@ async def validate_batch(
     strict_mode: bool = False,
 ) -> dict:
     """Validate multiple capsules in batch."""
-    validator = CapsuleValidator(strict_mode=strict_mode)
     results = []
     total_errors = 0
     total_warnings = 0
 
     for capsule in capsules:
+        validator = CapsuleValidator(strict_mode=strict_mode)
         is_valid, errors, warnings = await validator.validate(capsule)
         results.append(
             {

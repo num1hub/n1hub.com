@@ -1,7 +1,12 @@
+import pytest
+
 from app.config import settings
 from app.pipeline import DeepMinePipeline
 from app.store import MemoryCapsuleStore
 from app import vectorizer as vectorizer_module
+
+
+pytestmark = pytest.mark.vectorizer_no_stub
 
 
 class DummyEmbedding:
