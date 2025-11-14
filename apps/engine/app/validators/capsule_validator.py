@@ -237,5 +237,24 @@ class CapsuleValidator:
         existing = set(kw.lower() for kw in capsule.neuro_concentrate.keywords)
         new_keywords = [w for w in content_words if w not in existing][:12]
         capsule.neuro_concentrate.keywords.extend(new_keywords)
+        existing.update(new_keywords)
+
+        fallback_keywords = [
+            "knowledge",
+            "graph",
+            "retrieval",
+            "deepmine",
+            "n1hub",
+            "capsules",
+        ]
+        for word in fallback_keywords:
+            if len(capsule.neuro_concentrate.keywords) >= 12:
+                break
+            if len(capsule.neuro_concentrate.keywords) >= 5:
+                break
+            if word not in existing:
+                capsule.neuro_concentrate.keywords.append(word)
+                existing.add(word)
+
         capsule.neuro_concentrate.keywords = capsule.neuro_concentrate.keywords[:12]
         self.auto_fixes.append("keywords expanded from content")

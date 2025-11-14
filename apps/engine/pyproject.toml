@@ -26,3 +26,9 @@ dev = [
 [build-system]
 requires = ["setuptools>=68.0"]
 build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+markers = [
+  "integration: requires external services or long-running workflows",
+  "vectorizer_no_stub: disable automatic vectorizer stubbing for explicit tests",
+]

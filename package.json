@@ -9,7 +9,8 @@
     "lint": "eslint . --ext .ts,.tsx --max-warnings 0",
     "typecheck": "tsc --noEmit",
     "test:ui": "vitest run",
-    "test:engine": "python -m pytest apps/engine",
+    "test:engine": "python -m pytest -m 'not integration' apps/engine",
+    "test:engine:integration": "python -m pytest -m integration apps/engine",
     "test": "pnpm test:ui && pnpm test:engine",
     "dev:stack:unix": "bash ./scripts/dev.sh",
     "dev:stack:win": "powershell -ExecutionPolicy Bypass -File .\\\\scripts\\\\dev-win.ps1"
