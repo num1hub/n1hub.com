@@ -1,0 +1,137 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# N1Hub.com monorepo .gitignore
+# Covers: Next.js (root app + apps/interface), FastAPI (apps/engine), Docker,
+# TypeScript/Vitest/pytest, and environment configs.
+# ──────────────────────────────────────────────────────────────────────────────
+
+# ========== Node / Next.js ==========
+node_modules/
+**/node_modules/
+
+## Next.js build & cache (Next.js App Router root)
+.next/
+**/.next/
+out/
+**/out/
+
+# Vercel / framework metadata
+.vercel/
+**/.vercel/
+
+# TypeScript incremental build info
+*.tsbuildinfo
+
+# Common tool caches & artifacts
+.eslintcache
+.turbo/
+.parcel-cache/
+.swc/
+**/.cache/
+coverage/
+**/coverage/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-debug.log*
+
+# Lockfiles from other package managers (repo uses pnpm lockfile in root)
+# Keep pnpm-lock.yaml (tracked); avoid stray locks from local tooling.
+package-lock.json
+yarn.lock
+
+# Packed tarballs
+*.tgz
+
+# ========== Python / FastAPI (apps/engine) ==========
+# Byte-compiled / cache
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtualenvs
+.venv/
+venv/
+env/
+ENV/
+
+# Build / dist artifacts
+build/
+dist/
+eggs/
+.eggs/
+parts/
+sdist/
+develop-eggs/
+.wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+pip-wheel-metadata/
+
+# Test & type/lint caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.pyre/
+.pytype/
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+
+# Jupyter
+.ipynb_checkpoints/
+
+# ========== Environment files ==========
+# Ignore real secrets everywhere, but keep examples.
+# Root & workspace envs (Next.js also uses .env*.local)
+.env
+.env.*
+**/.env
+**/.env.*
+**/.env.local
+**/.env.*.local
+
+# Keep the documented example file(s) tracked
+!config/.env.example
+
+# ========== IDE / OS artifacts ==========
+# macOS / Windows
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Editors
+.idea/
+.fleet/
+.vscode/
+# If you keep recommended settings in repo, un-ignore specific files:
+# !.vscode/extensions.json
+# !.vscode/settings.json
+
+# ========== Docker / local infra data (generated locally) ==========
+# The repo tracks infra/docker-compose.yml and SQL migrations under infra/sql.
+# Ignore developer-created local volume folders if present.
+infra/**/pgdata/
+infra/**/postgres-data/
+infra/**/db-data/
+infra/**/redis-data/
+docker-data/
+**/docker-data/
+
+# ========== Misc scratch ==========
+tmp/
+temp/
+*.pid
+*.pid.lock
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Safety: explicit keep rules for tracked files often confused with ignores
+# (Uncomment if ever needed)
+# !**/next-env.d.ts
+# !infra/sql/**/*.sql
+# ──────────────────────────────────────────────────────────────────────────────

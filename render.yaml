@@ -1,0 +1,39 @@
+services:
+  - type: web
+    name: n1hub-engine
+    runtime: python
+    buildCommand: pip install -e apps/engine
+    startCommand: cd apps/engine && python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: STORE_BACKEND
+        value: postgres
+      - key: N1HUB_ENGINE_NAME
+        value: n1hub-engine
+      - key: N1HUB_ENGINE_VERSION
+        value: 0.1.0
+      - key: N1HUB_POSTGRES_DSN
+        fromDatabase:
+          name: n1hub-db
+          property: connectionString
+      - key: N1HUB_REDIS_URL
+        fromService:
+          type: redis
+          name: n1hub-redis
+          property: connectionString
+    healthCheckPath: /healthz
+    autoDeploy: false
+
+databases:
+  - name: n1hub-db
+    databaseName: n1hub
+    user: n1hub
+    plan: starter
+    postgresMajorVersion: 16
+    extensions:
+      - vector
+
+services:
+  - type: redis
+    name: n1hub-redis
+    plan: starter
+    maxmemoryPolicy: allkeys-lru

@@ -1,0 +1,44 @@
+{
+  "metadata": {
+    "capsule_id": "SPEC00000000000000000000000",
+    "version": "1.0.0",
+    "status": "active",
+    "author": "system",
+    "created_at": "2024-01-01T00:00:00Z",
+    "language": "en",
+    "source": {
+      "type": "text",
+      "uri": null
+    },
+    "tags": ["governance", "capsule", "spec"],
+    "length": {
+      "chars": 256,
+      "tokens_est": 64
+    },
+    "semantic_hash": "spec-hash-2024"
+  },
+  "core_payload": {
+    "content_type": "text/markdown",
+    "content": "This document captures the compliance expectations for the CapsuleOS v0.1 workflow.",
+    "truncation_note": null
+  },
+  "neuro_concentrate": {
+    "summary": "Governance capsules ensure deterministic chunking, strict citations, and privacy-first ingestion.",
+    "keywords": ["governance", "capsule", "privacy", "chunking", "citations"],
+    "entities": [],
+    "claims": [],
+    "insights": [],
+    "questions": [],
+    "archetypes": [],
+    "symbols": [],
+    "emotional_charge": 0.0,
+    "vector_hint": ["signal-1", "signal-2", "signal-3", "signal-4", "signal-5", "signal-6", "signal-7", "signal-8"],
+    "semantic_hash": "spec-hash-2024"
+  },
+  "recursive": {
+    "links": [],
+    "actions": [],
+    "prompts": [],
+    "confidence": 0.0
+  }
+}

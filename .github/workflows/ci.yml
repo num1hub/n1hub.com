@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: apps/engine
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 9
+      - name: Install dependencies
+        run: pnpm install --prefer-offline
+      - name: Lint (Next.js)
+        run: pnpm lint
+      - name: Typecheck (TS)
+        run: pnpm typecheck
+      - name: Vitest (UI)
+        run: pnpm test:ui
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r apps/engine/requirements.txt
+      - name: Pytest (Engine)
+        run: pytest -q
+      - name: Schema + spec alignment
+        run: python tools/validate_capsule_alignment.py
+      - name: Privacy scan
+        run: python tools/privacy_scan.py
