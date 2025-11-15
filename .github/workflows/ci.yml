@@ -13,6 +13,34 @@ jobs:
     runs-on: ubuntu-latest
     env:
       PYTHONPATH: apps/engine
+      N1HUB_POSTGRES_DSN: postgresql://postgres:postgres@localhost:5432/n1hub
+      N1HUB_REDIS_URL: redis://localhost:6379/0
+      N1HUB_STORE_BACKEND: postgres
+      TEST_POSTGRES_DSN: postgresql://postgres:postgres@localhost:5432/n1hub
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/n1hub
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: n1hub
+        options: >-
+          --health-cmd "pg_isready -d n1hub -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v2
@@ -26,12 +54,18 @@ jobs:
         run: pnpm typecheck
       - name: Vitest (UI)
         run: pnpm test:ui
+      - name: Install Postgres client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
           python -m pip install -e "apps/engine[dev]"
+      - name: Run database migrations
+        run: ./scripts/migrate.sh --database-url "$DATABASE_URL"
       - name: Pytest (Engine)
         run: pnpm test:engine
+      - name: Pytest (Engine Integration)
+        run: pnpm test:engine:integration
       - name: Schema + spec alignment
         run: python tools/validate_capsule_alignment.py
       - name: Privacy scan
